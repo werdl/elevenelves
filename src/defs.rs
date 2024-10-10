@@ -1,0 +1,301 @@
+pub enum AttributeLevel {
+    Excellent,
+    Good,
+    Average,
+    Poor,
+    Terrible,
+}
+
+pub enum HappinessLevel {
+    Ecstatic = 5,
+    Happy = 4,
+    Content = 3,
+    Unhappy = 2,
+    Miserable = 1,
+    Depressed = 0,
+}
+
+pub enum Role {
+    /// members of a council that makes decisions for the colony. being an elder boosts happiness, obedience, and loyalty of the elf. elders are the only elves that can become leaders. elders can also perform any task, but they are not as efficient as other roles. not being an elder after being one for a long time will cause a happiness drop, as will not being one after a certain age.
+    Elder,
+
+    /// leader of the colony. all leaders must have the elder role. having a leader with positive traits boosts happiness, obedience, and loyalty of all elves. conversely, having a leader with negative traits lowers happiness, obedience, and loyalty of all elves. leaders can also perform any task, but they are not as efficient as other roles. not being a leader after being one for a long time will cause a happiness drop. each colony can only have one leader at a time.
+    Leader,
+
+    /// Stronghold masters control each stronghold in the colony. they report to the leader. they can also perform any task, but they are not as efficient as other roles. each stronghold can only have one stronghold master at a time.
+    StrongholdMaster,
+
+    /// warriors protect the colony from enemies
+    Warrior,
+
+    /// farmers grow food for the colony
+    Farmer,
+
+    /// hunters gather meat for the colony
+    Hunter,
+
+    /// gatherers gather resources (seeds, logs etc.) for the colony
+    Gatherer,
+
+    /// carpenters build and repair wooden structures
+    Carpenter,
+
+    /// stonemasons build and repair stone structures
+    Stonemason,
+
+    /// blacksmiths build and repair metal structures
+    Blacksmith,
+
+    /// tailors make and repair clothing and leather or cloth armor
+    Tailor,
+
+    /// cooks prepare food for the colony
+    Cook,
+
+    /// healers heal injured or sick elves
+    Healer,
+
+    /// herbalists make medicine and potions
+    Herbalist,
+
+    /// alchemists make potions and other magical items. scientists look down upon alchemists, thus lowering the alchemist's happiness level when they are in the same building as a scientist.
+    Alchemist,
+
+    /// miners mine for resources such as stone, iron, and gold
+    Miner,
+
+    /// builders repair and upgrade buildings
+    Builder,
+
+    /// scientists research new technologies and make new items such as novel potions, albeit extremely slowly.
+    Scientist,
+
+    /// traders trade with other colonies and goblins (if possible)
+    Trader,
+}
+
+pub enum ObjectType {
+    Chair,
+    Table,
+    Bed,
+
+    Log,
+    Stone,
+    IronOre,
+    Cloth,
+    GoldOre,
+    GlassBottle,
+
+
+}
+
+pub enum ResourceType {
+    Wood,
+    Stone,
+    Iron,
+    Cloth,
+    Food,
+    Water,
+    Medicine,
+    Potion,
+    Gold,
+}
+
+pub struct Object {
+    /// name of object
+    pub name: String,
+
+    /// description of object
+    pub description: String,
+    pub object_type: ObjectType,
+    pub resource_type: ResourceType,
+}
+
+pub struct Task {
+    /// name and synopsis of task
+    pub description: String,
+
+    /// duration of task in seconds
+    pub duration: u32,
+
+    /// required building for task
+    pub required_building: BuildingType,
+
+    /// required roles workers must have to perform task
+    pub required_roles: Vec<Role>,
+
+    /// required objects that must be present in the stockpile to perform task
+    pub required_objects: Vec<Object>,
+
+    /// objects that will be produced by task
+    pub produced_objects: Vec<Object>,
+}
+
+/// describes how well an elf can perform a task
+pub struct RoleAbility {
+    pub role: Role,
+    pub ability: AttributeLevel,
+}
+
+/// An elf in the colony
+pub struct Elf {
+    /// name of elves (can be multiple names, ex: first, middle, last)
+    pub name: Vec<String>,
+
+    /// age of elf in years
+    pub age: u32,
+
+    /// affects elf's ability to withstand displeasure
+    pub patience: AttributeLevel,
+
+    /// affects elf's ability to think and reason (aka how fast they pick up on things)
+    pub intelligence: AttributeLevel,
+
+    /// affects elf's ability to withstand physical pain and deal damage
+    pub strength: AttributeLevel,
+
+    /// affects elf's ability to move quickly and gracefully (attack speed, dodge chance)
+    pub agility: AttributeLevel,
+
+    /// affects required happiness level to keep elf from leaving or rebelling
+    pub obedience: AttributeLevel,
+
+    /// affects elf's loyalty to the colony (aka how likely they are to leave or rebel)
+    pub loyalty: AttributeLevel,
+
+    /// current level of happiness (affects other stats and behavior)
+    pub happiness: HappinessLevel,
+
+    /// hunger level (affects happiness) (excellent = full, terrible = starving)
+    pub hunger: AttributeLevel,
+
+    /// thirst level (affects happiness) (excellent = full, terrible = dehydrated)
+    pub thirst: AttributeLevel,
+
+    /// sleep level (affects happiness) (excellent = well rested, terrible = exhausted). all elves need to sleep for 8 hours a day, but when this happens is irrelevant (usually when there are no tasks and their sleep level is Poor or Terrible, or when their sleep level is Terrible regardless of tasks)
+    pub sleep: AttributeLevel,
+
+    /// roles in the colony (affects behavior and stats)
+    pub roles: Vec<RoleAbility>,
+
+    /// current task (affects behavior and stats)
+    pub task: Option<Task>,
+
+    /// current building ID (affects behavior and stats)
+    pub building: Option<u32>,
+}
+
+pub enum BuildingType {
+    /// elders & leaders
+    MeetingHall,
+
+    /// warriors
+    Barracks,
+
+    /// farmers
+    Farm,
+
+    /// hunters
+    HuntingLodge,
+
+    /// gatherers
+    GatheringHut,
+
+    /// carpenters
+    CarpenterWorkshop,
+
+    /// stonemasons
+    StonemasonWorkshop,
+
+    /// blacksmiths
+    Forge,
+
+    /// tailors
+    TailorShop,
+
+    /// cooks
+    Kitchen,
+
+    /// healers
+    Hospital,
+
+    /// herbalists
+    HerbalistHut,
+
+    /// alchemists
+    AlchemistLab,
+
+    /// miners
+    Mine,
+
+    /// builders
+    BuilderHut,
+
+    /// scientists
+    Laboratory,
+
+    /// turrets
+    Tower,
+
+    /// keep out enemies
+    Wall,
+
+    /// traders
+    TradingPost,
+}
+
+/// Buildings are required for tasks, ex. a blacksmith requires a forge, a cook requires a kitchen, etc. Buildings can be upgraded to improve efficiency, capacity, etc. Buildings can be destroyed by enemies, natural disasters, or elves rebelling. They are also needed for defense, ex. walls, towers, etc.
+pub struct Building {
+    /// building ID (unique identifier)
+    pub id: u32,
+
+    /// level of building (affects efficiency, capacity, etc.)
+    pub level: u32,
+
+    /// type of building (affects tasks, defense, etc.)
+    pub building_type: BuildingType,
+}
+
+pub struct Stronghold {
+    /// name of stronghold
+    pub name: String,
+
+    /// elves in colony
+    pub elves: Vec<Elf>,
+
+    /// buildings in stronghold. if all buildings are destroyed, the stronghold is disbanded
+    pub buildings: Vec<Building>,
+}
+
+pub struct Colony {
+    /// name of colony
+    pub name: String,
+
+    /// strongholds in colony
+    pub strongholds: Vec<Stronghold>,
+}
+
+pub struct World {
+    /// colonies in game
+    pub colonies: Vec<Colony>,
+}
+
+pub struct Goblin {
+    /// name of goblin
+    pub name: Vec<String>,
+
+    /// age of goblin in years
+    pub age: u32,
+
+    /// affects goblin's ability to withstand attacks and how much damage they can deal
+    pub strength: AttributeLevel,
+
+    /// affects goblin's ability to move quickly and dodge attacks. also affects attack speed
+    pub agility: AttributeLevel,
+
+    /// affects goblin's likelihood to flee or surrender
+    pub loyalty: AttributeLevel,
+
+    /// affects trading likelihood, prices, and behavior
+    pub charisma: AttributeLevel,
+}
