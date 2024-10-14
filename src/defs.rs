@@ -1,3 +1,5 @@
+use rand::Rng;
+
 pub enum AttributeLevel {
     Excellent,
     Good,
@@ -72,33 +74,91 @@ pub enum Role {
 
     /// traders trade with other colonies and goblins (if possible)
     Trader,
+
+    /// nitwits are useless and cannot perform any tasks. they are a burden, but can be trained to perform tasks. they are also more likely to rebel or leave the colony.
+    Nitwit,
 }
 
-pub enum ObjectType {
-    Chair,
-    Table,
-    Bed,
-
-    Log,
-    Stone,
-    IronOre,
-    Cloth,
-    GoldOre,
-    GlassBottle,
-
-
-}
-
+/// Resource types describe the materials that objects are made from
 pub enum ResourceType {
     Wood,
     Stone,
     Iron,
-    Cloth,
-    Food,
-    Water,
-    Medicine,
-    Potion,
+    Diamond,
     Gold,
+    Cloth,
+    Glass,
+}
+
+/// Object types describe the function of objects - ex. food, water, medicine, potions, etc. It also details their metadata
+pub enum ObjectType {
+    Food {
+        name: String,
+        description: String,
+
+        /// how many hunger points are restored - if percentage, will restore floor(hunger) and the decimal chance of restoring 1 more
+        hunger_power: f32,
+    
+    },
+    Water,
+    Medicine {
+        name: String,
+        description: String,
+
+        /// how much health is restored
+        healing_power: u32,
+    },
+    Potion {
+        name: String,
+        description: String,
+
+        /// how much health is restored
+        healing_power: u32,
+
+        /// how much strength is granted
+        strength_power: u32,
+
+        /// how much agility is granted
+        agility_power: u32,
+
+        /// how much intelligence is granted
+        intelligence_power: u32,
+
+        /// how much obedience is granted
+        obedience_power: u32,
+
+        /// how much loyalty is granted
+        loyalty_power: u32,
+
+        /// effect length in game ticks
+        effect_length: u32,
+    },
+    Weapon {
+        name: String,
+        description: String,
+
+        /// base damage of weapon (further affected by strength)
+        damage_power: u32,
+
+        /// how much agility is required to wield
+        agility_requirement: AttributeLevel,
+
+        /// how much agility is removed from wearer
+        agility_penalty: AttributeLevel,
+    },
+    Armor {
+        name: String,
+        description: String,
+
+        /// base defense of armor (further affected by strength)
+        defense_power: u32,
+
+        /// how much agility is required to wear
+        agility_requirement: AttributeLevel,
+
+        /// how much agility is removed from wearer
+        agility_penalty: AttributeLevel,
+    },
 }
 
 pub struct Object {
@@ -143,7 +203,7 @@ pub struct Elf {
     pub name: Vec<String>,
 
     /// age of elf in years
-    pub age: u32,
+    pub age: f32,
 
     /// affects elf's ability to withstand displeasure
     pub patience: AttributeLevel,
@@ -183,6 +243,9 @@ pub struct Elf {
 
     /// current building ID (affects behavior and stats)
     pub building: Option<u32>,
+
+    /// current health level (affects behavior and stats), 0 = dead, 100 = full health
+    pub health: u32, 
 }
 
 pub enum BuildingType {
@@ -278,6 +341,9 @@ pub struct Colony {
 pub struct World {
     /// colonies in game
     pub colonies: Vec<Colony>,
+
+    /// current in game tick (twenty ticks per second)
+    pub tick: u64,
 }
 
 pub struct Goblin {
@@ -285,7 +351,7 @@ pub struct Goblin {
     pub name: Vec<String>,
 
     /// age of goblin in years
-    pub age: u32,
+    pub age: f32,
 
     /// affects goblin's ability to withstand attacks and how much damage they can deal
     pub strength: AttributeLevel,
@@ -298,4 +364,50 @@ pub struct Goblin {
 
     /// affects trading likelihood, prices, and behavior
     pub charisma: AttributeLevel,
+}
+
+pub trait Random {
+    fn random() -> Self;
+}
+
+impl Random for Role {
+    fn random() -> Role {
+        let mut rng = rand::thread_rng();
+        match rng.gen_range(0..19) {
+            0 => Role::Elder,
+            1 => Role::Leader,
+            2 => Role::StrongholdMaster,
+            3 => Role::Warrior,
+            4 => Role::Farmer,
+            5 => Role::Hunter,
+            6 => Role::Gatherer,
+            7 => Role::Carpenter,
+            8 => Role::Stonemason,
+            9 => Role::Blacksmith,
+            10 => Role::Tailor,
+            11 => Role::Cook,
+            12 => Role::Healer,
+            13 => Role::Herbalist,
+            14 => Role::Alchemist,
+            15 => Role::Miner,
+            16 => Role::Builder,
+            17 => Role::Scientist,
+            18 => Role::Trader,
+            _ => Role::Nitwit,
+        }
+    }
+}
+
+impl Random for AttributeLevel {
+    fn random() -> AttributeLevel {
+        let mut rng = rand::thread_rng();
+        match rng.gen_range(0..5) {
+            0 => AttributeLevel::Excellent,
+            1 => AttributeLevel::Good,
+            2 => AttributeLevel::Average,
+            3 => AttributeLevel::Poor,
+            4 => AttributeLevel::Terrible,
+            _ => AttributeLevel::Average,
+        }
+    }
 }
