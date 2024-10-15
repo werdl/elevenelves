@@ -159,6 +159,19 @@ pub enum ObjectType {
         /// how much agility is removed from wearer
         agility_penalty: AttributeLevel,
     },
+    PickAxe {
+        name: String,
+        description: String,
+
+        /// base breaking power
+        breaking_power: u32,
+
+        /// how much agility is required to wear 
+        agility_requirement: AttributeLevel,
+
+        /// how much agility is removed from wearer
+        agility_penalty: AttributeLevel
+    }
 }
 
 pub struct Object {
