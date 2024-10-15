@@ -1,13 +1,16 @@
 use rand::Rng;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum AttributeLevel {
-    Excellent,
-    Good,
-    Average,
-    Poor,
-    Terrible,
+    Excellent = 5,
+    Good = 4,
+    Average = 3,
+    Poor = 2,
+    Terrible = 1,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum HappinessLevel {
     Ecstatic = 5,
     Happy = 4,
@@ -17,6 +20,7 @@ pub enum HappinessLevel {
     Depressed = 0,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Role {
     /// members of a council that makes decisions for the colony. being an elder boosts happiness, obedience, and loyalty of the elf. elders are the only elves that can become leaders. elders can also perform any task, but they are not as efficient as other roles. not being an elder after being one for a long time will cause a happiness drop, as will not being one after a certain age.
     Elder,
@@ -80,6 +84,7 @@ pub enum Role {
 }
 
 /// Resource types describe the materials that objects are made from
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ResourceType {
     Wood,
     Stone,
@@ -88,9 +93,11 @@ pub enum ResourceType {
     Gold,
     Cloth,
     Glass,
+    Animal,
 }
 
 /// Object types describe the function of objects - ex. food, water, medicine, potions, etc. It also details their metadata
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum ObjectType {
     Food {
         name: String,
@@ -161,16 +168,13 @@ pub enum ObjectType {
     },
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Object {
-    /// name of object
-    pub name: String,
-
-    /// description of object
-    pub description: String,
     pub object_type: ObjectType,
     pub resource_type: ResourceType,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Task {
     /// name and synopsis of task
     pub description: String,
@@ -192,12 +196,14 @@ pub struct Task {
 }
 
 /// describes how well an elf can perform a task
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct RoleAbility {
     pub role: Role,
     pub ability: AttributeLevel,
 }
 
 /// An elf in the colony
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Elf {
     /// name of elves (can be multiple names, ex: first, middle, last)
     pub name: Vec<String>,
@@ -241,6 +247,9 @@ pub struct Elf {
     /// current task (affects behavior and stats)
     pub task: Option<Task>,
 
+    /// tick when current task was started
+    pub task_start: Option<u64>,
+
     /// current building ID (affects behavior and stats)
     pub building: Option<u32>,
 
@@ -248,6 +257,7 @@ pub struct Elf {
     pub health: u32, 
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum BuildingType {
     /// elders & leaders
     MeetingHall,
@@ -308,6 +318,7 @@ pub enum BuildingType {
 }
 
 /// Buildings are required for tasks, ex. a blacksmith requires a forge, a cook requires a kitchen, etc. Buildings can be upgraded to improve efficiency, capacity, etc. Buildings can be destroyed by enemies, natural disasters, or elves rebelling. They are also needed for defense, ex. walls, towers, etc.
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Building {
     /// building ID (unique identifier)
     pub id: u32,
@@ -319,6 +330,7 @@ pub struct Building {
     pub building_type: BuildingType,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Stronghold {
     /// name of stronghold
     pub name: String,
@@ -328,17 +340,31 @@ pub struct Stronghold {
 
     /// buildings in stronghold. if all buildings are destroyed, the stronghold is disbanded
     pub buildings: Vec<Building>,
+
+    /// list of all tasks currently awaiting a worker
+    pub task_queue: Vec<Task>,
+
+    /// list of all items in stockpile
+    pub stockpile: Vec<Object>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Colony {
     /// name of colony
     pub name: String,
 
     /// strongholds in colony
     pub strongholds: Vec<Stronghold>,
+
+    /// owner of colony's username (currently unimplemented, but left in for future multiplayer functionality)
+    pub leader: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct World {
+    /// name of world
+    pub name: String,
+
     /// colonies in game
     pub colonies: Vec<Colony>,
 
@@ -364,6 +390,9 @@ pub struct Goblin {
 
     /// affects trading likelihood, prices, and behavior
     pub charisma: AttributeLevel,
+
+    /// current level of health (0 = dead, 100 = full health)
+    pub health: u32,
 }
 
 pub trait Random {
@@ -409,5 +438,55 @@ impl Random for AttributeLevel {
             4 => AttributeLevel::Terrible,
             _ => AttributeLevel::Average,
         }
+    }
+}
+
+pub fn profession_to_building(profession: Role) -> BuildingType {
+    match profession {
+        Role::Elder => BuildingType::MeetingHall,
+        Role::Leader => BuildingType::MeetingHall,
+        Role::StrongholdMaster => BuildingType::MeetingHall,
+        Role::Warrior => BuildingType::Barracks,
+        Role::Farmer => BuildingType::Farm,
+        Role::Hunter => BuildingType::HuntingLodge,
+        Role::Gatherer => BuildingType::GatheringHut,
+        Role::Carpenter => BuildingType::CarpenterWorkshop,
+        Role::Stonemason => BuildingType::StonemasonWorkshop,
+        Role::Blacksmith => BuildingType::Forge,
+        Role::Tailor => BuildingType::TailorShop,
+        Role::Cook => BuildingType::Kitchen,
+        Role::Healer => BuildingType::Hospital,
+        Role::Herbalist => BuildingType::HerbalistHut,
+        Role::Alchemist => BuildingType::AlchemistLab,
+        Role::Miner => BuildingType::Mine,
+        Role::Builder => BuildingType::BuilderHut,
+        Role::Scientist => BuildingType::Laboratory,
+        Role::Trader => BuildingType::TradingPost,
+        _ => BuildingType::MeetingHall,
+    }
+}
+
+pub fn building_to_profession(building: BuildingType) -> Role {
+    match building {
+        BuildingType::MeetingHall => Role::Elder,
+        BuildingType::Barracks => Role::Warrior,
+        BuildingType::Farm => Role::Farmer,
+        BuildingType::HuntingLodge => Role::Hunter,
+        BuildingType::GatheringHut => Role::Gatherer,
+        BuildingType::CarpenterWorkshop => Role::Carpenter,
+        BuildingType::StonemasonWorkshop => Role::Stonemason,
+        BuildingType::Forge => Role::Blacksmith,
+        BuildingType::TailorShop => Role::Tailor,
+        BuildingType::Kitchen => Role::Cook,
+        BuildingType::Hospital => Role::Healer,
+        BuildingType::HerbalistHut => Role::Herbalist,
+        BuildingType::AlchemistLab => Role::Alchemist,
+        BuildingType::Mine => Role::Miner,
+        BuildingType::BuilderHut => Role::Builder,
+        BuildingType::Laboratory => Role::Scientist,
+        BuildingType::TradingPost => Role::Trader,
+        BuildingType::Tower => Role::Warrior,
+        BuildingType::Wall => Role::Warrior,
+        _ => Role::Nitwit,
     }
 }
