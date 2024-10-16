@@ -123,14 +123,18 @@ impl TaskOperations for Stronghold {
             return Ok(());
         }
 
+        let mut elf_indices_to_remove = Vec::new();
+
         // now check that the elf has the required skills
-        for elf in &free_elves {
+        for elf in free_elves.clone() {
             let mut has_skills = true;
 
             for role in &task.required_roles {
                 if !elf.roles.iter().any(|r| r.role == *role) {
                     // remove the elf from the list of free elves
                     has_skills = false;
+
+                    elf_indices_to_remove.push(free_elves.iter().position(|e| *e == elf).unwrap());
                 }
             }
         }
