@@ -10,7 +10,7 @@ pub enum AttributeLevel {
     Terrible = 1,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub enum HappinessLevel {
     Ecstatic = 5,
     Happy = 4,
@@ -209,14 +209,14 @@ pub struct Task {
 }
 
 /// describes how well an elf can perform a task
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct RoleAbility {
     pub role: Role,
     pub ability: AttributeLevel,
 }
 
 /// An elf in the colony
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Elf {
     /// name of elves (can be multiple names, ex: first, middle, last)
     pub name: Vec<String>,

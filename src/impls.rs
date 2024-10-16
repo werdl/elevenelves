@@ -7,11 +7,11 @@ use rand::{random, Rng};
 
 
 pub trait NewEntity {
-    fn new(age: Option<f32>, surname: Option<String>) -> Self;
+    fn new(age: Option<f32>, surname: Option<String>, roles: Option<Vec<Role>>) -> Self;
 }
 
 impl NewEntity for Elf {
-    fn new(age: Option<f32>, surname: Option<String>) -> Self {
+    fn new(age: Option<f32>, surname: Option<String>, roles: Option<Vec<Role>>) -> Self {
         let forenames = vec![
             "vfaanraazr",
             "raazr",
@@ -31,19 +31,25 @@ impl NewEntity for Elf {
         let name = vec![forenames[rng.gen_range(0..forenames.len())].to_string(), surname.unwrap_or_else(|| surnames[rng.gen_range(0..surnames.len())].to_string())];
 
         // randomly select 3 roles
-        let mut roles = Vec::new();
+        let mut roles = roles.unwrap_or_else(|| {
+            let mut roles = Vec::new();
 
-        for _ in 0..3 {
-            roles.push(RoleAbility {
-                role: Role::random(),
-                ability: AttributeLevel::random(),
-            });
-        }
+            for _ in 0..3 {
+                roles.push(Role::random());
+            }
+
+            roles
+        });
+
+        let finished_roles = roles.iter().map(|role| RoleAbility {
+            role: role.clone(),
+            ability: AttributeLevel::random(),
+        }).collect::<Vec<RoleAbility>>();
 
         Elf {
             name: name,
             age: age.unwrap_or_else(|| rng.gen_range(18.0..100.0) as i32 as f32),
-            roles,
+            roles: finished_roles,
 
             happiness: HappinessLevel::Content,
             patience: AttributeLevel::random(),
@@ -65,7 +71,7 @@ impl NewEntity for Elf {
 }
 
 impl NewEntity for Goblin {
-    fn new(age: Option<f32>, surname: Option<String>) -> Self {
+    fn new(age: Option<f32>, surname: Option<String>, roles: Option<Vec<Role>>) -> Self {
         let forenames = vec![
             "vfaanraazr",
             "raazr",
@@ -123,21 +129,28 @@ impl TaskOperations for Stronghold {
             return Ok(());
         }
 
-        let mut elf_indices_to_remove = Vec::new();
 
-        // now check that the elf has the required skills
-        for elf in free_elves.clone() {
-            let mut has_skills = true;
+        // remove elves that don't have the required roles
+        free_elves.retain(|elf| {
+            task.required_roles.iter().all(|role| elf.roles.iter().any(|r| r.role == *role))
+        });
 
-            for role in &task.required_roles {
-                if !elf.roles.iter().any(|r| r.role == *role) {
-                    // remove the elf from the list of free elves
-                    has_skills = false;
 
-                    elf_indices_to_remove.push(free_elves.iter().position(|e| *e == elf).unwrap());
-                }
+
+
+        if free_elves.is_empty() {
+            // if an elf exists but isn't available, we push to the task queue
+            let suitable_elf = self.elves.iter_mut().find(|elf| elf.roles.iter().any(|r| task.required_roles.contains(&r.role)));
+
+            if let Some(elf) = suitable_elf {
+                self.task_queue.push(task);
+                return Ok(());
             }
+
+            // othwise, unlikely to fixed quickly, so we error out rather than push to the task queue
+            return Err(GameError::NoSuitableElfError("No suitable elf available".to_string()));
         }
+
 
         // factor in elf skill level to task duration
         let mut task = task.clone();
