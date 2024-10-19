@@ -55,8 +55,18 @@ impl GameOptions for World {
         
         // generate initial 11 elves
         
-        // first, a leader
-        elves.push(Elf::new(None, None, Some(vec![Role::Leader])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Leader, Role::Elder])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Trader, Role::Elder, Role::Miner])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Trader])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Warrior, Role::Elder])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Warrior, Role::Miner])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Warrior])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Scientist, Role::Elder])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Farmer, Role::Elder])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Cook])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Farmer])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Miner])));
+
 
 
 

@@ -1,9 +1,6 @@
 # todo
 ## Short Term
-- fix default elves
-- fix special roles in random picking algorithm
-- ensure tasks check building status
-
+- Implement building and elf upgrading tasks
 ## Medium Term
 - Implement combat system
 - Implement goblin strongholds

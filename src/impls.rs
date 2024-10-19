@@ -34,12 +34,30 @@ impl NewEntity for Elf {
         let mut roles = roles.unwrap_or_else(|| {
             let mut roles = Vec::new();
 
-            for _ in 0..3 {
+            while roles.len() < 3 {
                 roles.push(Role::random());
+
+                roles.dedup();
             }
 
             roles
         });
+
+        // pad out roles if less than 3
+        while roles.len() < 3 {
+            roles.push(Role::random());
+
+            // ensure last role pushed is unique and is not nitwit
+            if roles.len() == 3 {
+                roles.dedup();
+                roles.retain(|role| *role != Role::Nitwit);
+            }
+        }
+
+        // if nitwit is present, remove all other roles
+        if roles.contains(&Role::Nitwit) {
+            roles = vec![Role::Nitwit];
+        }
 
         let finished_roles = roles.iter().map(|role| RoleAbility {
             role: role.clone(),
@@ -120,29 +138,31 @@ pub trait TaskOperations {
 
 impl TaskOperations for Stronghold {
     fn new_task(&mut self, task: Task) -> Result<(), GameError> {
+        // first, check we have the required building(s)
+        if !self.buildings.iter().any(|building| building.building_type == task.required_building) {
+            return Err(GameError::NoSuitableBuildingError("Missing required building".to_string()));
+        }
+        
+
         // first, check if we have a free elf
         let mut free_elves = self.elves.iter_mut().filter(|elf| elf.task.is_none()).collect::<Vec<&mut Elf>>();
-
-        if free_elves.is_empty() {
-            // push to the task queue
-            self.task_queue.push(task);
-            return Ok(());
+        // remove elves that don't have the required roles (all roles must be present)
+        for role in task.required_roles.iter() {
+            // ensure all elves have this role
+            free_elves.retain(|elf| elf.roles.iter().any(|r| r.role == *role));
         }
-
-
-        // remove elves that don't have the required roles
-        free_elves.retain(|elf| {
-            task.required_roles.iter().all(|role| elf.roles.iter().any(|r| r.role == *role))
-        });
-
-
 
 
         if free_elves.is_empty() {
             // if an elf exists but isn't available, we push to the task queue
-            let suitable_elf = self.elves.iter_mut().find(|elf| elf.roles.iter().any(|r| task.required_roles.contains(&r.role)));
+            let mut possible_elves = self.elves.clone();
 
-            if let Some(elf) = suitable_elf {
+            for role in task.required_roles.iter() {
+                // ensure all elves have this role
+                possible_elves.retain(|elf| elf.roles.iter().any(|r| r.role == *role));
+            }
+
+            if !possible_elves.is_empty() {
                 self.task_queue.push(task);
                 return Ok(());
             }

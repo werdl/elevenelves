@@ -23,5 +23,7 @@ fn main() {
         produced_objects: vec![],
     };
 
-    world.colonies[0].strongholds[0].new_task(task.clone()).unwrap();
+    let res = world.colonies[0].strongholds[0].new_task(task.clone());
+
+    println!("{:#?}", res);
 }

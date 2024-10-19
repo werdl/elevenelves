@@ -415,10 +415,7 @@ pub trait Random {
 impl Random for Role {
     fn random() -> Role {
         let mut rng = rand::thread_rng();
-        match rng.gen_range(0..19) {
-            0 => Role::Elder,
-            1 => Role::Leader,
-            2 => Role::StrongholdMaster,
+        match rng.gen_range(3..=19) {
             3 => Role::Warrior,
             4 => Role::Farmer,
             5 => Role::Hunter,
