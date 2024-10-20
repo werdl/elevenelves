@@ -11,7 +11,7 @@ use {
 fn main() {
     let mut world = World::new(Some("World".to_string()), Some("Player".to_string()));
 
-    println!("{:#?}", world.colonies[0].strongholds[0].elves);
+    println!("{:#?}", world.colonies[0].strongholds[0].elves[0]);
 
     // assign test task and see if it gets assigned to the best elf
     let task = Task {
@@ -23,7 +23,30 @@ fn main() {
         produced_objects: vec![],
     };
 
-    let res = world.colonies[0].strongholds[0].new_task(task.clone());
+    world.colonies[0].strongholds[0].task_queue.push(task.clone());
 
-    println!("{:#?}", res);
+    world.tick();
+
+    println!("{:#?}", world.colonies[0].strongholds[0].task_queue);
+
+    // now upgrade an elf
+    // add 5 wood to the stronghold
+    for _ in 0..15 {
+        world.colonies[0].strongholds[0].stockpile.push(Object {
+            resource_type: ResourceType::Gold,
+            object_type: ObjectType::RawMaterial {
+                name: "Gold".to_string(),
+                description: "A bar of gold".to_string(),
+            },
+        });
+    }
+
+    let elf = &mut world.colonies[0].strongholds[0].elves[0];
+    println!("{:#?}", world.colonies[0].strongholds[0].upgrade_building(BuildingType::TradingPost));
+
+    println!("{:#?}", world.colonies[0].strongholds[0].buildings);
+
+    
+
+
 }

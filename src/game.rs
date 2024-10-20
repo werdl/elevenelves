@@ -1,4 +1,4 @@
-use crate::{defs::*, impls::*};
+use crate::{defs::*, impls::*, };
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -57,7 +57,7 @@ impl GameOptions for World {
         
         elves.push(Elf::new(None, None, Some(vec![Role::Leader, Role::Elder])));
         elves.push(Elf::new(None, None, Some(vec![Role::Trader, Role::Elder, Role::Miner])));
-        elves.push(Elf::new(None, None, Some(vec![Role::Trader])));
+        elves.push(Elf::new(None, None, Some(vec![Role::Trader, Role::Warrior])));
         elves.push(Elf::new(None, None, Some(vec![Role::Warrior, Role::Elder])));
         elves.push(Elf::new(None, None, Some(vec![Role::Warrior, Role::Miner])));
         elves.push(Elf::new(None, None, Some(vec![Role::Warrior])));
@@ -158,7 +158,17 @@ impl GameOptions for World {
                 stronghold.check_tasks_complete(self.tick)?;
 
                 // now check if there are any tasks we can now do in the task queue
-                
+                // for every task in the queue, try to call assign_task, and if returned Ok(true), remove the task from the queue
+                let mut i = 0;
+                while i < stronghold.task_queue.len() {
+                    let task = stronghold.task_queue[i].clone();
+                    if stronghold.new_task(task)? {
+                        stronghold.task_queue.remove(i);
+                    } else {
+                        i += 1;
+                    }
+                }
+
             }
         }
 
@@ -168,3 +178,150 @@ impl GameOptions for World {
     }
 }
 
+pub trait Train {
+    fn train(&mut self, elf: i32, role: Role) -> Result<(), GameError>;
+}
+
+impl Train for Stronghold {
+    fn train(&mut self, elf_index: i32, role: Role) -> Result<(), GameError> {
+        let elf = &mut self.elves[elf_index as usize];
+
+        // if we are already at excellent level, return
+        if elf.roles.iter().any(|r| r.role == role && r.ability == AttributeLevel::Excellent) {
+            return Ok(());
+        }
+
+
+        // check if we have the required building
+        if !self.buildings.iter().any(|building| building.building_type == profession_to_building(role.clone())) {
+            return Err(GameError::NoSuitableBuildingError("Missing required building".to_string()));
+        }
+
+        // ensure that the given elf is unoccupied
+        if elf.task.is_some() {
+            return Err(GameError::NoSuitableElfError("Elf is already occupied".to_string()));
+        }
+
+        // determine how many resources we need to train the elf (specified by profession_to_resource)
+        let required_resources = profession_to_resource(role.clone());
+
+        // check if we have enough resources
+        let num_required = match elf.roles.iter().find(|r| r.role == role) {
+            Some(role) => role.ability as i32 + 1,
+            None => 1,
+        };
+
+        // now check if we have enough resources
+        let mut num_resources = 0;
+
+        for object in &self.stockpile {
+            if object.resource_type == required_resources {
+                num_resources += 1;
+            }
+        }
+
+        if num_resources < num_required {
+            return Err(GameError::NoSuitableBuildingError("Not enough resources".to_string()));
+        }
+
+        // remove the resources
+        self.stockpile.retain(|object| object.resource_type != required_resources);
+
+        // now train the elf
+        let role_ability = elf.roles.iter_mut().find(|r| r.role == role);
+
+        if let Some(role_ability) = role_ability {
+            role_ability.ability = match role_ability.ability {
+                AttributeLevel::Terrible => AttributeLevel::Poor,
+                AttributeLevel::Poor => AttributeLevel::Average,
+                AttributeLevel::Average => AttributeLevel::Good,
+                AttributeLevel::Good => AttributeLevel::Excellent,
+                AttributeLevel::Excellent => AttributeLevel::Excellent, // should never happen
+            };
+        } else {
+            elf.roles.push(RoleAbility {
+                role,
+                ability: AttributeLevel::Terrible,
+            });
+        }
+
+        Ok(())
+    }
+}
+
+pub trait UpgradeBuilding {
+    fn upgrade_building(&mut self, building: BuildingType) -> Result<(), GameError>;
+}
+
+impl UpgradeBuilding for Stronghold {
+    fn upgrade_building(&mut self, building: BuildingType) -> Result<(), GameError> {
+        // upgrade all buildings of the given type - if there are none, create one at level 1
+
+        // for each building, consume resources of the level of the building + 1
+        // if we don't have enough resources, return an error
+
+        let mut found = false;
+
+        // for building in &mut self.buildings {
+        //     if building.building_type == building {
+
+        //         found = true;
+        //         // check if we have enough resources
+        //         let num_required = building.level + 1;
+
+        //         let mut num_resources = 0;
+
+        //         for object in &self.stockpile {
+        //             if object.resource_type == building_to_resource(building.clone().building_type) {
+        //                 num_resources += 1;
+        //             }
+        //         }
+
+        //         if num_resources < num_required {
+        //             return Err(GameError::NoSuitableBuildingError("Not enough resources".to_string()));
+        //         }
+
+        //         // remove num_required resources
+        //         for _ in 0..num_required {
+        //             self.stockpile.remove(
+        //                 self.stockpile.iter().position(|object| object.resource_type == building_to_resource(building.clone().building_type)).unwrap());
+        //         }
+
+        //         // upgrade the building
+        //         building.level += 1;
+        //     }
+        // }
+
+        if !found {
+            // create a new building
+            let num_required = 1;
+
+            let mut num_resources = 0;
+
+
+            for object in &self.stockpile {
+                if object.resource_type == building_to_resource(building.clone()) {
+                    num_resources += 1;
+                }
+            }
+
+            if num_resources < num_required {
+                return Err(GameError::NoSuitableBuildingError("Not enough resources".to_string()));
+            }
+
+            // remove num_required resources
+            for _ in 0..num_required {
+                self.stockpile.remove(
+                    self.stockpile.iter().position(|object| object.resource_type == building_to_resource(building.clone())).unwrap());
+            }
+
+            self.buildings.push(Building {
+                id: self.buildings.len() as u32,
+                building_type: building,
+                level: 1,
+            });
+        }
+
+        Ok(())
+    }
+}

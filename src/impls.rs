@@ -81,7 +81,6 @@ impl NewEntity for Elf {
             sleep: AttributeLevel::random(),
             health: 100,
 
-            building: None,
             task: None,
             task_start: None,
         }
@@ -131,13 +130,15 @@ impl NewEntity for Goblin {
 }
 
 pub trait TaskOperations {
-    fn new_task(&mut self, task: Task) -> Result<(), GameError>;
+    fn new_task(&mut self, task: Task) -> Result<bool, GameError>;
     fn list_tasks(&self, elf: Option<&Elf>) -> Result<Vec<Task>, GameError>;
     fn check_tasks_complete(&mut self, tick: u64) -> Result<Vec<Object>, GameError>;
 }
 
 impl TaskOperations for Stronghold {
-    fn new_task(&mut self, task: Task) -> Result<(), GameError> {
+    /// true - task assigned to elf
+    /// false - task added to task queue
+    fn new_task(&mut self, task: Task) -> Result<bool, GameError> {
         // first, check we have the required building(s)
         if !self.buildings.iter().any(|building| building.building_type == task.required_building) {
             return Err(GameError::NoSuitableBuildingError("Missing required building".to_string()));
@@ -164,7 +165,7 @@ impl TaskOperations for Stronghold {
 
             if !possible_elves.is_empty() {
                 self.task_queue.push(task);
-                return Ok(());
+                return Ok(false);
             }
 
             // othwise, unlikely to fixed quickly, so we error out rather than push to the task queue
@@ -199,7 +200,7 @@ impl TaskOperations for Stronghold {
 
         // assign the task to the first free elf
         free_elves[best_elf_position].task = Some(task);
-        Ok(())
+        Ok(true)
     }
     fn list_tasks(&self, elf: Option<&Elf>) -> Result<Vec<Task>, GameError> {
         if let Some(elf) = elf {

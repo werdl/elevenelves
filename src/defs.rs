@@ -1,7 +1,7 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum AttributeLevel {
     Excellent = 5,
     Good = 4,
@@ -94,6 +94,9 @@ pub enum ResourceType {
     Cloth,
     Glass,
     Animal,
+    Plant,
+    Magical,
+    Technological,
 }
 
 /// Object types describe the function of objects - ex. food, water, medicine, potions, etc. It also details their metadata
@@ -178,7 +181,11 @@ pub enum ObjectType {
 
         /// how much agility is removed from wearer
         agility_penalty: AttributeLevel
-    }
+    },
+    RawMaterial {
+        name: String,
+        description: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -263,14 +270,11 @@ pub struct Elf {
     /// tick when current task was started
     pub task_start: Option<u64>,
 
-    /// current building ID (affects behavior and stats)
-    pub building: Option<u32>,
-
     /// current health level (affects behavior and stats), 0 = dead, 100 = full health
     pub health: u32, 
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub enum BuildingType {
     /// elders & leaders
     MeetingHall,
@@ -331,7 +335,7 @@ pub enum BuildingType {
 }
 
 /// Buildings are required for tasks, ex. a blacksmith requires a forge, a cook requires a kitchen, etc. Buildings can be upgraded to improve efficiency, capacity, etc. Buildings can be destroyed by enemies, natural disasters, or elves rebelling. They are also needed for defense, ex. walls, towers, etc.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Building {
     /// building ID (unique identifier)
     pub id: u32,
@@ -499,4 +503,29 @@ pub fn building_to_profession(building: BuildingType) -> Role {
         BuildingType::Wall => Role::Warrior,
         _ => Role::Nitwit,
     }
+}
+
+pub fn profession_to_resource(profession: Role) -> ResourceType {
+    match profession {
+        Role::Farmer => ResourceType::Plant,
+        Role::Hunter => ResourceType::Animal,
+        Role::Gatherer => ResourceType::Plant,
+        Role::Carpenter => ResourceType::Wood,
+        Role::Stonemason => ResourceType::Stone,
+        Role::Blacksmith => ResourceType::Iron,
+        Role::Tailor => ResourceType::Cloth,
+        Role::Cook => ResourceType::Animal,
+        Role::Healer => ResourceType::Plant,
+        Role::Herbalist => ResourceType::Plant,
+        Role::Alchemist => ResourceType::Magical,
+        Role::Miner => ResourceType::Stone,
+        Role::Builder => ResourceType::Wood,
+        Role::Scientist => ResourceType::Technological,
+        Role::Trader => ResourceType::Gold,
+        _ => ResourceType::Wood,
+    }
+}
+
+pub fn building_to_resource(building: BuildingType) -> ResourceType {
+    profession_to_resource(building_to_profession(building))
 }

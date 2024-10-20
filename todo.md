@@ -1,6 +1,6 @@
 # todo
 ## Short Term
-- Implement building and elf upgrading tasks
+- fix building upgrading
 ## Medium Term
 - Implement combat system
 - Implement goblin strongholds
