@@ -33,16 +33,17 @@ fn main() {
     // add 5 wood to the stronghold
     for _ in 0..15 {
         world.colonies[0].strongholds[0].stockpile.push(Object {
-            resource_type: ResourceType::Gold,
+            resource_type: ResourceType::Plant,
             object_type: ObjectType::RawMaterial {
-                name: "Gold".to_string(),
-                description: "A bar of gold".to_string(),
+                name: "Plant".to_string(),
+                description: "It's green and (possibly) edible".to_string(),
             },
         });
     }
 
     let elf = &mut world.colonies[0].strongholds[0].elves[0];
-    println!("{:#?}", world.colonies[0].strongholds[0].upgrade_building(BuildingType::TradingPost));
+    println!("{:#?}", world.colonies[0].strongholds[0].buildings);
+    println!("{:#?}", world.colonies[0].strongholds[0].upgrade_building(BuildingType::Farm));
 
     println!("{:#?}", world.colonies[0].strongholds[0].buildings);
 

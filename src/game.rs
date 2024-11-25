@@ -262,35 +262,36 @@ impl UpgradeBuilding for Stronghold {
 
         let mut found = false;
 
-        // for building in &mut self.buildings {
-        //     if building.building_type == building {
+        // first, upgrade any and all existing buildings
+        for checked_building in &mut self.buildings {
+            if checked_building.building_type == building {
+                found = true;
 
-        //         found = true;
-        //         // check if we have enough resources
-        //         let num_required = building.level + 1;
 
-        //         let mut num_resources = 0;
+                // first, check if we have enough resources
+                let num_required = checked_building.level + 1;
 
-        //         for object in &self.stockpile {
-        //             if object.resource_type == building_to_resource(building.clone().building_type) {
-        //                 num_resources += 1;
-        //             }
-        //         }
+                let mut num_resources = 0;
 
-        //         if num_resources < num_required {
-        //             return Err(GameError::NoSuitableBuildingError("Not enough resources".to_string()));
-        //         }
+                for object in &self.stockpile {
+                    if object.resource_type == building_to_resource(building.clone()) {
+                        num_resources += 1;
+                    }
+                }
 
-        //         // remove num_required resources
-        //         for _ in 0..num_required {
-        //             self.stockpile.remove(
-        //                 self.stockpile.iter().position(|object| object.resource_type == building_to_resource(building.clone().building_type)).unwrap());
-        //         }
+                if num_resources < num_required {
+                    return Err(GameError::NoSuitableBuildingError("Not enough resources".to_string()));
+                }
 
-        //         // upgrade the building
-        //         building.level += 1;
-        //     }
-        // }
+                // remove num_required resources
+                for _ in 0..num_required {
+                    self.stockpile.remove(
+                        self.stockpile.iter().position(|object| object.resource_type == building_to_resource(building.clone())).unwrap());
+                }
+
+                checked_building.level += 1;
+            }
+        }
 
         if !found {
             // create a new building
