@@ -271,7 +271,7 @@ pub struct Elf {
     pub task_start: Option<u64>,
 
     /// current health level (affects behavior and stats), 0 = dead, 100 = full health
-    pub health: u32, 
+    pub health: i32, 
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
@@ -409,7 +409,7 @@ pub struct Goblin {
     pub charisma: AttributeLevel,
 
     /// current level of health (0 = dead, 100 = full health)
-    pub health: u32,
+    pub health: i32,
 }
 
 pub trait Random {
